@@ -1,20 +1,47 @@
-"use client";
-
 import React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { redirect } from "next/navigation";
 import Navbar from "../components/Navbar";
+import { getAuthenticatedUser } from "@/app/lib/auth";
+import { db } from "@/app/db";
+import { users } from "@/app/db/schema";
+import { eq } from "drizzle-orm";
+import LogoutButton from "../components/LogoutButton";
 
 const DEFAULT_AVATAR =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuBxqoNRrv77yJR4ONmQh_PNqjEZWv1UQLB8DbO_z56OtaUZy1PXR_qKDTvQMK7-i_MFc-LgH4a466Y2tnc_lGR2QMQbkHkAdbW359h6ZoEuWWpiT-6WcY9rklfYZzX3IIJpS0nJGENkI7LvVs0hUi4Hiu1lqAt02nblbrIiK-c9TGtFals_tenZKMHl0ZiDobKVwa8tN2yzPB4T34eVX5o1zzjNadl639Yba-6oy2se5035_pf3yaSHIoIxNWHNTsdrSgfzx1G43rjS";
 
-export default function ProfilePage() {
-  const router = useRouter();
+export default async function ProfilePage() {
+  const { user } = await getAuthenticatedUser();
 
-  // Static user data for now
-  const avatarUrl = DEFAULT_AVATAR;
-  const fullName = "Guest User";
-  const email = "guest@example.com";
+  if (!user) {
+    redirect("/onboarding");
+  }
+
+  // Fetch from DB
+  const dbUser = await db.query.users.findFirst({
+    where: eq(users.id, user.id),
+  });
+
+  // Prepare display data
+  const avatarUrl =
+    dbUser?.avatarUrl ||
+    user.user_metadata?.avatar_url ||
+    user.user_metadata?.picture ||
+    DEFAULT_AVATAR;
+
+  const fullName =
+    dbUser?.name ||
+    user.user_metadata?.full_name ||
+    user.user_metadata?.name ||
+    user.email?.split("@")[0] ||
+    "User";
+
+  const email = user.email || "No Email";
+  const role = dbUser?.role
+    ? dbUser.role.charAt(0).toUpperCase() + dbUser.role.slice(1)
+    : "Renter";
+  const isVerified = dbUser?.isVerified || false;
 
   return (
     <div className="bg-background-light dark:bg-background-dark font-display text-zinc-900 dark:text-zinc-100 min-h-screen">
@@ -48,15 +75,17 @@ export default function ProfilePage() {
                       <p className="text-zinc-900 dark:text-white text-[24px] font-bold leading-tight tracking-[-0.015em]">
                         {fullName}
                       </p>
-                      <span
-                        className="material-symbols-outlined text-secondary text-xl"
-                        title="Verified User"
-                      >
-                        verified
-                      </span>
+                      {isVerified && (
+                        <span
+                          className="material-symbols-outlined text-secondary text-xl"
+                          title="Verified User"
+                        >
+                          verified
+                        </span>
+                      )}
                     </div>
                     <p className="text-zinc-500 dark:text-zinc-400 text-base font-normal leading-normal">
-                      {email} • Renter
+                      {email} • {role}
                     </p>
                   </div>
                   <div className="flex gap-4 mt-2">
@@ -100,10 +129,10 @@ export default function ProfilePage() {
                       </span>
                     </div>
                   </Link>
-                  {/* Menu Item: Parking History (Example Link) */}
-                  <a
+                  {/* Menu Item: Parking History */}
+                  <Link
                     className="flex items-center gap-4 px-6 min-h-[64px] justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors border-b border-zinc-100 dark:border-zinc-800"
-                    href="#"
+                    href="/history"
                   >
                     <div className="flex items-center gap-4">
                       <div className="text-zinc-600 dark:text-zinc-300 flex items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 shrink-0 size-10">
@@ -120,11 +149,11 @@ export default function ProfilePage() {
                         chevron_right
                       </span>
                     </div>
-                  </a>
+                  </Link>
                   {/* Menu Item: Payments */}
-                  <a
+                  <Link
                     className="flex items-center gap-4 px-6 min-h-[64px] justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors border-b border-zinc-100 dark:border-zinc-800"
-                    href="#"
+                    href="/payments"
                   >
                     <div className="flex items-center gap-4">
                       <div className="text-zinc-600 dark:text-zinc-300 flex items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 shrink-0 size-10">
@@ -141,11 +170,11 @@ export default function ProfilePage() {
                         chevron_right
                       </span>
                     </div>
-                  </a>
+                  </Link>
                   {/* Menu Item: Settings */}
-                  <a
+                  <Link
                     className="flex items-center gap-4 px-6 min-h-[64px] justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors border-b border-zinc-100 dark:border-zinc-800"
-                    href="#"
+                    href="/settings"
                   >
                     <div className="flex items-center gap-4">
                       <div className="text-zinc-600 dark:text-zinc-300 flex items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 shrink-0 size-10">
@@ -162,11 +191,11 @@ export default function ProfilePage() {
                         chevron_right
                       </span>
                     </div>
-                  </a>
+                  </Link>
                   {/* Menu Item: Help */}
-                  <a
+                  <Link
                     className="flex items-center gap-4 px-6 min-h-[64px] justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
-                    href="#"
+                    href="/support"
                   >
                     <div className="flex items-center gap-4">
                       <div className="text-zinc-600 dark:text-zinc-300 flex items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 shrink-0 size-10">
@@ -183,7 +212,12 @@ export default function ProfilePage() {
                         chevron_right
                       </span>
                     </div>
-                  </a>
+                  </Link>
+
+                  {/* Logout Button */}
+                  <div className="border-t border-zinc-100 dark:border-zinc-800 mt-2 pt-2">
+                    <LogoutButton />
+                  </div>
                 </div>
               </div>
             </div>

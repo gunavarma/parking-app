@@ -12,6 +12,11 @@ export const metadata: Metadata = {
   description: "Find the perfect parking spot",
 };
 
+import QueryProvider from "./providers/QueryProvider";
+import { LocationProvider } from "./context/LocationContext";
+
+// ... imports
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,7 +33,9 @@ export default function RootLayout({
       <body
         className={`${inter.className} antialiased bg-background-light dark:bg-background-dark text-zinc-900 dark:text-white min-h-screen`}
       >
-        {children}
+        <QueryProvider>
+          <LocationProvider>{children}</LocationProvider>
+        </QueryProvider>
       </body>
     </html>
   );
