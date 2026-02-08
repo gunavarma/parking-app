@@ -1,7 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Navbar from "../components/Navbar";
 
 export default function MyListingsPage() {
+  const router = useRouter();
   const myListings = [
     {
       id: 1,
@@ -194,7 +198,14 @@ export default function MyListingsPage() {
                     </span>
                     Usage
                   </button>
-                  <button className="flex-1 flex items-center justify-center gap-2 bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 h-10 rounded-lg text-sm font-bold hover:bg-secondary/20 transition-all cursor-pointer">
+                  <button
+                    className="flex-1 flex items-center justify-center gap-2 bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 h-10 rounded-lg text-sm font-bold hover:bg-secondary/20 transition-all cursor-pointer"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      router.push(`/edit-listing/${listing.id}`);
+                    }}
+                  >
                     <span className="material-symbols-outlined text-[18px]">
                       edit
                     </span>
